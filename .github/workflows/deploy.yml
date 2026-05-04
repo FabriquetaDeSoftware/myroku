@@ -71,6 +71,7 @@ jobs:
             -p ${BACKEND_PORT}:${BACKEND_PORT} \
             -e PORT=${BACKEND_PORT} \
             --env-file ${BACKEND_ENV_FILE} \
+            -v /var/run/docker.sock:/var/run/docker.sock \
             ${BACKEND_IMAGE}
 
       - name: TCP healthcheck

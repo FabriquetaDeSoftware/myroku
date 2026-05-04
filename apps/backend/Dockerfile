@@ -11,9 +11,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -trimpath \
     -o /out/api ./cmd/api
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM alpine:3.20
 WORKDIR /app
+RUN apk add --no-cache docker-cli
 COPY --from=builder /out/api /app/api
 EXPOSE 8888
-USER nonroot:nonroot
 ENTRYPOINT ["/app/api"]
