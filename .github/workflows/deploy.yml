@@ -43,29 +43,29 @@ jobs:
     needs: detect
     if: needs.detect.outputs.backend == 'true' || inputs.force_backend
     runs-on: [self-hosted, linux, myroku-prod]
+    env:
+      BACKEND_PORT: ${{ vars.BACKEND_PORT || '8888' }}
+      BACKEND_ENV_FILE: ${{ vars.BACKEND_ENV_FILE || '/opt/myroku/env/backend.env' }}
+      BACKEND_IMAGE: ${{ vars.BACKEND_IMAGE || 'myroku-backend:latest' }}
+      BACKEND_CONTAINER: ${{ vars.BACKEND_CONTAINER || 'myroku-backend' }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Build imagem do backend
-        run: docker build -t myroku-backend:latest ./apps/backend
+        run: docker build -t ${BACKEND_IMAGE} ./apps/backend
 
       - name: Recriar container do backend
-        env:
-          BACKEND_PORT: ${{ vars.BACKEND_PORT || '8888' }}
-          BACKEND_ENV_FILE: ${{ vars.BACKEND_ENV_FILE || '/opt/myroku/env/backend.env' }}
         run: |
-          docker rm -f myroku-backend 2>/dev/null || true
+          docker rm -f ${BACKEND_CONTAINER} 2>/dev/null || true
           docker run -d \
-            --name myroku-backend \
+            --name ${BACKEND_CONTAINER} \
             --restart unless-stopped \
             -p ${BACKEND_PORT}:${BACKEND_PORT} \
             -e PORT=${BACKEND_PORT} \
             --env-file ${BACKEND_ENV_FILE} \
-            myroku-backend:latest
+            ${BACKEND_IMAGE}
 
       - name: TCP healthcheck
-        env:
-          BACKEND_PORT: ${{ vars.BACKEND_PORT || '8888' }}
         shell: bash
         run: |
           for i in {1..15}; do
@@ -76,7 +76,7 @@ jobs:
             sleep 2
           done
           echo "backend não subiu em 30s na porta ${BACKEND_PORT}"
-          docker logs myroku-backend
+          docker logs ${BACKEND_CONTAINER}
           exit 1
 
       - name: Prune dangling images
@@ -87,29 +87,29 @@ jobs:
     needs: detect
     if: needs.detect.outputs.frontend == 'true' || inputs.force_frontend
     runs-on: [self-hosted, linux, myroku-prod]
+    env:
+      FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '4000' }}
+      FRONTEND_ENV_FILE: ${{ vars.FRONTEND_ENV_FILE || '/opt/myroku/env/frontend.env' }}
+      FRONTEND_IMAGE: ${{ vars.FRONTEND_IMAGE || 'myroku-frontend:latest' }}
+      FRONTEND_CONTAINER: ${{ vars.FRONTEND_CONTAINER || 'myroku-frontend' }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Build imagem do frontend
-        run: docker build -t myroku-frontend:latest ./apps/frontend/ui
+        run: docker build -t ${FRONTEND_IMAGE} ./apps/frontend/ui
 
       - name: Recriar container do frontend
-        env:
-          FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '4000' }}
-          FRONTEND_ENV_FILE: ${{ vars.FRONTEND_ENV_FILE || '/opt/myroku/env/frontend.env' }}
         run: |
-          docker rm -f myroku-frontend 2>/dev/null || true
+          docker rm -f ${FRONTEND_CONTAINER} 2>/dev/null || true
           docker run -d \
-            --name myroku-frontend \
+            --name ${FRONTEND_CONTAINER} \
             --restart unless-stopped \
             -p ${FRONTEND_PORT}:${FRONTEND_PORT} \
             -e PORT=${FRONTEND_PORT} \
             --env-file ${FRONTEND_ENV_FILE} \
-            myroku-frontend:latest
+            ${FRONTEND_IMAGE}
 
       - name: HTTP healthcheck
-        env:
-          FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '4000' }}
         shell: bash
         run: |
           for i in {1..20}; do
@@ -120,7 +120,7 @@ jobs:
             sleep 2
           done
           echo "frontend não subiu em 40s na porta ${FRONTEND_PORT}"
-          docker logs myroku-frontend
+          docker logs ${FRONTEND_CONTAINER}
           exit 1
 
       - name: Prune dangling images
