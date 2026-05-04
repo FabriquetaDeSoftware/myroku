@@ -1,0 +1,128 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_backend:
+        description: "Forçar redeploy do backend mesmo sem mudanças"
+        type: boolean
+        default: false
+      force_frontend:
+        description: "Forçar redeploy do frontend mesmo sem mudanças"
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: [self-hosted, linux, myroku-prod]
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'apps/backend/**'
+              - '.github/workflows/deploy.yml'
+            frontend:
+              - 'apps/frontend/ui/**'
+              - '.github/workflows/deploy.yml'
+
+  backend:
+    needs: detect
+    if: needs.detect.outputs.backend == 'true' || inputs.force_backend
+    runs-on: [self-hosted, linux, myroku-prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build imagem do backend
+        run: docker build -t myroku-backend:latest ./apps/backend
+
+      - name: Recriar container do backend
+        env:
+          BACKEND_PORT: ${{ vars.BACKEND_PORT || '8888' }}
+          BACKEND_ENV_FILE: ${{ vars.BACKEND_ENV_FILE || '/opt/myroku/env/backend.env' }}
+        run: |
+          docker rm -f myroku-backend 2>/dev/null || true
+          docker run -d \
+            --name myroku-backend \
+            --restart unless-stopped \
+            -p ${BACKEND_PORT}:${BACKEND_PORT} \
+            -e PORT=${BACKEND_PORT} \
+            --env-file ${BACKEND_ENV_FILE} \
+            myroku-backend:latest
+
+      - name: TCP healthcheck
+        env:
+          BACKEND_PORT: ${{ vars.BACKEND_PORT || '8888' }}
+        shell: bash
+        run: |
+          for i in {1..15}; do
+            if (echo > /dev/tcp/localhost/${BACKEND_PORT}) 2>/dev/null; then
+              echo "backend OK na porta ${BACKEND_PORT}"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "backend não subiu em 30s na porta ${BACKEND_PORT}"
+          docker logs myroku-backend
+          exit 1
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f
+
+  frontend:
+    needs: detect
+    if: needs.detect.outputs.frontend == 'true' || inputs.force_frontend
+    runs-on: [self-hosted, linux, myroku-prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build imagem do frontend
+        run: docker build -t myroku-frontend:latest ./apps/frontend/ui
+
+      - name: Recriar container do frontend
+        env:
+          FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '4000' }}
+          FRONTEND_ENV_FILE: ${{ vars.FRONTEND_ENV_FILE || '/opt/myroku/env/frontend.env' }}
+        run: |
+          docker rm -f myroku-frontend 2>/dev/null || true
+          docker run -d \
+            --name myroku-frontend \
+            --restart unless-stopped \
+            -p ${FRONTEND_PORT}:${FRONTEND_PORT} \
+            -e PORT=${FRONTEND_PORT} \
+            --env-file ${FRONTEND_ENV_FILE} \
+            myroku-frontend:latest
+
+      - name: HTTP healthcheck
+        env:
+          FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '4000' }}
+        shell: bash
+        run: |
+          for i in {1..20}; do
+            if curl -fsS http://localhost:${FRONTEND_PORT}/ -o /dev/null; then
+              echo "frontend OK na porta ${FRONTEND_PORT}"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "frontend não subiu em 40s na porta ${FRONTEND_PORT}"
+          docker logs myroku-frontend
+          exit 1
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f
