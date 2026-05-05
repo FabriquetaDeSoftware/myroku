@@ -1,0 +1,25 @@
+<div
+  class="flex min-h-dvh flex-col"
+  style="background: var(--color-surface); color: var(--color-fg)"
+>
+  <app-topbar
+    (openCommandPalette)="commandPaletteOpen.set(true)"
+    (openModulesPanel)="modulesPanelOpen.set(true)"
+  />
+  <app-realtime-banner />
+
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 lg:px-8">
+    <router-outlet />
+  </main>
+
+  <app-command-palette
+    [open]="commandPaletteOpen()"
+    (closed)="commandPaletteOpen.set(false)"
+  />
+  <app-modules-panel
+    [open]="modulesPanelOpen()"
+    (closed)="modulesPanelOpen.set(false)"
+  />
+  <app-cheatsheet />
+  <app-toast-host />
+</div>

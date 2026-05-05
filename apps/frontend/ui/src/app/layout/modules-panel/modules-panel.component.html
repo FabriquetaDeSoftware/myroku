@@ -1,0 +1,114 @@
+@if (open()) {
+<div class="fixed inset-0 z-50">
+  <div @fade class="absolute inset-0 bg-black/40" (click)="closed.emit()"></div>
+  <aside
+    @slide
+    class="absolute right-0 top-0 flex h-full w-[450px] flex-col overflow-y-auto border-l shadow-lg"
+    style="
+      background: var(--color-surface);
+      border-color: var(--color-border);
+      color: var(--color-fg);
+    "
+    role="dialog"
+    aria-label="Módulos e Configurações"
+  >
+    <header
+      class="flex items-center justify-between border-b px-5 py-4"
+      style="border-color: var(--color-border)"
+    >
+      <h2 class="text-base font-semibold">Módulos & Configurações</h2>
+      <button
+        type="button"
+        (click)="closed.emit()"
+        class="rounded-lg p-1.5 hover:opacity-80 focus-ring"
+        aria-label="Fechar painel"
+      >
+        <lucide-icon [img]="X" class="size-4" />
+      </button>
+    </header>
+
+    <section class="space-y-1 p-4">
+      <h3
+        class="px-2 py-2 text-xs font-medium uppercase tracking-wider"
+        style="color: var(--color-fg-muted)"
+      >
+        Operação
+      </h3>
+
+      <button
+        type="button"
+        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors"
+        style="background: var(--color-surface-muted)"
+      >
+        <lucide-icon [img]="Settings" class="size-4" />
+        <span>Sistema</span>
+      </button>
+
+      <div class="ml-7 space-y-1">
+        <button
+          type="button"
+          (click)="theme.toggle()"
+          class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:opacity-80"
+        >
+          <span>Tema</span>
+          <span class="text-xs" style="color: var(--color-fg-muted)">
+            {{ theme.resolved() }}
+          </span>
+        </button>
+        <a
+          routerLink="/settings/system"
+          (click)="closed.emit()"
+          class="block rounded-lg px-3 py-2 text-sm transition-colors hover:opacity-80"
+        >
+          Versão & uptime
+        </a>
+      </div>
+    </section>
+
+    <section class="space-y-1 p-4">
+      <h3
+        class="px-2 py-2 text-xs font-medium uppercase tracking-wider"
+        style="color: var(--color-fg-muted)"
+      >
+        Integração
+      </h3>
+      <a
+        routerLink="/settings/github"
+        (click)="closed.emit()"
+        class="block rounded-lg px-3 py-2 text-sm transition-colors hover:opacity-80"
+      >
+        GitHub
+      </a>
+      <a
+        routerLink="/settings/server"
+        (click)="closed.emit()"
+        class="block rounded-lg px-3 py-2 text-sm transition-colors hover:opacity-80"
+      >
+        Servidor
+      </a>
+    </section>
+
+    <section class="space-y-1 p-4">
+      <h3
+        class="px-2 py-2 text-xs font-medium uppercase tracking-wider"
+        style="color: var(--color-fg-muted)"
+      >
+        Geral
+      </h3>
+      @for (item of ['Times', 'Usuários', 'Perfis', 'Reverse Proxy']; track item) {
+      <div
+        class="flex items-center justify-between rounded-lg px-3 py-2 text-sm"
+        style="color: var(--color-fg-muted)"
+      >
+        <span>{{ item }}</span>
+        <span
+          class="rounded px-1.5 py-0.5 text-xs"
+          style="background: var(--color-surface-muted)"
+          >em breve</span
+        >
+      </div>
+      }
+    </section>
+  </aside>
+</div>
+}

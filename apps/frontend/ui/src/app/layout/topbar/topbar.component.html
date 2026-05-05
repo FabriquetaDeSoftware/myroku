@@ -1,0 +1,84 @@
+<header
+  class="sticky top-0 z-40 border-b backdrop-blur"
+  style="
+    border-color: var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  "
+>
+  <div class="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 lg:px-8">
+    <!-- Brand chip -->
+    <a routerLink="/" class="flex items-center gap-2">
+      <span
+        class="grid h-8 w-8 place-items-center rounded-lg text-sm font-semibold text-white"
+        style="background: var(--color-primary-600)"
+      >
+        MY
+      </span>
+      <span class="hidden text-sm font-medium sm:inline">myroku.local</span>
+    </a>
+
+    <!-- Nav links -->
+    <nav class="ml-4 hidden items-center gap-1 md:flex">
+      @for (link of navLinks; track link.path) {
+      <a
+        [routerLink]="link.path"
+        routerLinkActive="active-nav-link"
+        [routerLinkActiveOptions]="{ exact: link.exact }"
+        class="flex items-center gap-2 border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors hover:opacity-100"
+        style="color: var(--color-fg-muted)"
+      >
+        <lucide-icon [img]="link.icon" class="size-4" />
+        {{ link.label }}
+      </a>
+      }
+    </nav>
+
+    <!-- Search trigger -->
+    <button
+      type="button"
+      (click)="openCommandPalette.emit()"
+      class="ml-auto flex w-72 items-center gap-2 rounded-xl border px-3 py-1.5 text-sm transition-colors hover:opacity-90 focus-ring"
+      style="
+        border-color: var(--color-border);
+        background: var(--color-surface-muted);
+        color: var(--color-fg-muted);
+      "
+    >
+      <lucide-icon [img]="Search" class="size-4" />
+      <span class="flex-1 text-left">Buscar...</span>
+      <kbd
+        class="hidden rounded px-1.5 py-0.5 text-xs sm:inline"
+        style="background: var(--color-surface)"
+      >
+        Ctrl K
+      </kbd>
+    </button>
+
+    <!-- Modules button -->
+    <button
+      type="button"
+      (click)="openModulesPanel.emit()"
+      class="rounded-lg p-2 transition-colors hover:opacity-80 focus-ring"
+      style="color: var(--color-fg)"
+      aria-label="Módulos"
+    >
+      <lucide-icon [img]="LayoutGrid" class="size-5" />
+    </button>
+
+    <!-- Theme toggle -->
+    <button
+      type="button"
+      (click)="theme.toggle()"
+      class="rounded-lg p-2 transition-colors hover:opacity-80 focus-ring"
+      style="color: var(--color-fg)"
+      [attr.aria-label]="
+        theme.resolved() === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'
+      "
+    >
+      <lucide-icon
+        [img]="theme.resolved() === 'dark' ? Sun : Moon"
+        class="size-5"
+      />
+    </button>
+  </div>
+</header>

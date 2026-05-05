@@ -1,3 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e4e4e7;
+  --color-fg: #0a0a0a;
+  --color-fg-muted: #71717a;
+
+  --color-status-running: #10b981;
+  --color-status-stopped: #71717a;
+  --color-status-failed: #ef4444;
+  --color-status-pending: #f59e0b;
+  --color-status-building: #3b82f6;
+  --color-status-queued: #a855f7;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --radius-card: 1rem;
+  --radius-input: 0.75rem;
+}
+
+.dark {
+  --color-surface: #0a0a0a;
+  --color-surface-muted: #18181b;
+  --color-border: #27272a;
+  --color-fg: #fafafa;
+  --color-fg-muted: #a1a1aa;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+    color: var(--color-fg);
+    background-color: var(--color-surface);
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility focus-ring {
+  @apply outline-none;
+
+  &:focus-visible {
+    @apply ring-2 ring-[color:var(--color-primary-500)]/50 ring-offset-2;
+    --tw-ring-offset-color: var(--color-surface);
+  }
+}
+
+/* Estado ativo dos nav links da topbar */
+.active-nav-link {
+  border-bottom-color: var(--color-primary-500) !important;
+  color: var(--color-fg) !important;
+}
