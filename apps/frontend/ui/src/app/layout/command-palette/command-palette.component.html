@@ -1,0 +1,124 @@
+@if (open()) {
+<div
+  @fade
+  class="fixed inset-0 z-50 grid place-items-start bg-black/50 pt-24 backdrop-blur-md"
+  (click)="onBackdropClick()"
+>
+  <div
+    @pop
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    role="dialog"
+    aria-label="Paleta de comandos"
+    (click)="$event.stopPropagation()"
+    class="mx-auto w-full max-w-2xl overflow-hidden rounded-(--radius-card) bg-surface text-fg shadow-2xl shadow-black/20 ring-1 ring-border"
+  >
+    <div class="flex items-center gap-3 border-b border-border px-4 py-3">
+      <lucide-icon
+        [img]="Search"
+        class="size-5 shrink-0 text-(--color-fg-muted)"
+      />
+      <input
+        cdkFocusInitial
+        type="text"
+        placeholder="Buscar ou executar comando..."
+        class="h-8 flex-1 bg-transparent text-base outline-none placeholder:text-(--color-fg-muted)"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+      <kbd
+        class="rounded-md bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium text-(--color-fg-muted) ring-1 ring-border"
+      >
+        esc
+      </kbd>
+    </div>
+
+    @if (results().length === 0) {
+    <div
+      class="flex flex-col items-center justify-center gap-3 px-8 py-12 text-center"
+    >
+      <lucide-icon
+        [img]="SearchX"
+        class="size-8 text-(--color-fg-muted) opacity-60"
+      />
+      <p class="text-sm text-(--color-fg-muted)">Nenhum comando encontrado.</p>
+    </div>
+    } @else {
+    <div class="max-h-96 overflow-y-auto py-2">
+      @for (group of groupedResults(); track group[0]) {
+      <div class="px-2 pb-1">
+        <div
+          class="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-(--color-fg-muted)"
+        >
+          {{ group[0] }}
+        </div>
+        @for (cmd of group[1]; track cmd.id) {
+        <button
+          #cmdRow
+          type="button"
+          (click)="run(cmd)"
+          (mouseenter)="setActive(cmd)"
+          [ngClass]="isActive(cmd) ? 'bg-surface-muted' : ''"
+          class="flex w-full items-center gap-3 rounded-(--radius-input) px-3 py-2.5 text-left text-sm transition-colors focus-ring"
+        >
+          <lucide-icon
+            [img]="iconFor(cmd)"
+            [ngClass]="isActive(cmd) ? 'text-primary-600' : 'text-(--color-fg-muted)'"
+            class="size-4 shrink-0"
+          />
+          <span class="flex-1 truncate">{{ cmd.label }}</span>
+          @if (cmd.shortcut) {
+          <kbd
+            class="rounded-md bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium text-(--color-fg-muted) ring-1 ring-border"
+          >
+            {{ cmd.shortcut }}
+          </kbd>
+          }
+          <lucide-icon
+            [img]="ArrowRight"
+            [ngClass]="isActive(cmd) ? 'opacity-100' : 'opacity-0'"
+            class="size-3.5 shrink-0 text-primary-600 transition-opacity"
+          />
+        </button>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <div
+      class="flex items-center gap-4 border-t border-border bg-surface-muted px-4 py-2 text-[11px] text-(--color-fg-muted)"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <kbd
+          class="inline-flex items-center rounded-md bg-surface-muted px-1.5 py-0.5 font-medium ring-1 ring-border"
+        >
+          <lucide-icon [img]="ArrowUp" class="size-3" />
+        </kbd>
+        <kbd
+          class="inline-flex items-center rounded-md bg-surface-muted px-1.5 py-0.5 font-medium ring-1 ring-border"
+        >
+          <lucide-icon [img]="ArrowDown" class="size-3" />
+        </kbd>
+        navegar
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <kbd
+          class="inline-flex items-center rounded-md bg-surface-muted px-1.5 py-0.5 font-medium ring-1 ring-border"
+        >
+          <lucide-icon [img]="CornerDownLeft" class="size-3" />
+        </kbd>
+        abrir
+      </span>
+      <span class="ml-auto inline-flex items-center gap-1.5">
+        <kbd
+          class="rounded-md bg-surface-muted px-1.5 py-0.5 font-medium ring-1 ring-border"
+        >
+          esc
+        </kbd>
+        fechar
+      </span>
+    </div>
+  </div>
+</div>
+}
