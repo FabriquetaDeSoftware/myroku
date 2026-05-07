@@ -11,6 +11,7 @@ const NAV_SHORTCUTS: NavShortcut[] = [
   { sequence: 'g d', label: 'Ir para Dashboard', path: '/' },
   { sequence: 'g a', label: 'Ir para Aplicações', path: '/apps' },
   { sequence: 'g c', label: 'Ir para Containers', path: '/containers' },
+  { sequence: 'g i', label: 'Ir para Imagens', path: '/images' },
   { sequence: 'g s', label: 'Ir para Configurações', path: '/settings/system' },
 ];
 

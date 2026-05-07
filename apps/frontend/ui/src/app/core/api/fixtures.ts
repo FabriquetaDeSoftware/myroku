@@ -1,4 +1,11 @@
-import { Application, Container, Deployment, EnvVar, GithubRepo } from './types';
+import {
+  Application,
+  Container,
+  Deployment,
+  DockerImage,
+  EnvVar,
+  GithubRepo,
+} from './types';
 
 /**
  * Dados de exemplo para o Sprint 2. Substituir por chamadas reais à API
@@ -141,6 +148,89 @@ export const CONTAINERS_FIXTURE: Container[] = [
     image: 'docs:deploy-03',
     status: 'stopped',
     startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+  },
+];
+
+export const IMAGES_FIXTURE: DockerImage[] = [
+  {
+    id: 'sha256:1a2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890',
+    repository: 'my-api',
+    tag: 'deploy-42',
+    digest: 'sha256:1a2b3c4d',
+    sizeBytes: 184_320_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    inUse: true,
+    containerCount: 1,
+  },
+  {
+    id: 'sha256:9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0',
+    repository: 'dashboard',
+    tag: 'deploy-18',
+    digest: 'sha256:9f8e7d6c',
+    sizeBytes: 96_320_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    inUse: true,
+    containerCount: 1,
+  },
+  {
+    id: 'sha256:5c4b3a2e1d0f9e8d7c6b5a4938271605c4b3a2e1d0f9e8d7c6b5a4938271605c',
+    repository: 'worker',
+    tag: 'deploy-07',
+    digest: 'sha256:5c4b3a2e',
+    sizeBytes: 142_640_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    inUse: true,
+    containerCount: 1,
+  },
+  {
+    id: 'sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+    repository: 'postgres',
+    tag: '16-alpine',
+    digest: 'sha256:abcdef01',
+    sizeBytes: 248_120_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
+    inUse: true,
+    containerCount: 1,
+  },
+  {
+    id: 'sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',
+    repository: 'redis',
+    tag: '7-alpine',
+    digest: 'sha256:fedcba98',
+    sizeBytes: 33_280_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    inUse: false,
+    containerCount: 0,
+  },
+  {
+    id: 'sha256:0011223344556677889900112233445566778899001122334455667788990011',
+    repository: 'docs',
+    tag: 'deploy-03',
+    digest: 'sha256:00112233',
+    sizeBytes: 56_800_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    inUse: true,
+    containerCount: 1,
+  },
+  {
+    id: 'sha256:aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899',
+    repository: '<none>',
+    tag: '<none>',
+    sizeBytes: 412_000_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    inUse: false,
+    containerCount: 0,
+    dangling: true,
+  },
+  {
+    id: 'sha256:1234abcd5678efab9012cdef3456ab781234abcd5678efab9012cdef3456ab78',
+    repository: 'nginx',
+    tag: '1.27-alpine',
+    digest: 'sha256:1234abcd',
+    sizeBytes: 41_200_000,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+    inUse: false,
+    containerCount: 0,
   },
 ];
 

@@ -35,6 +35,18 @@ export interface Container {
   startedAt?: string;
 }
 
+export interface DockerImage {
+  id: string;
+  repository: string;
+  tag: string;
+  digest?: string;
+  sizeBytes: number;
+  createdAt: string;
+  inUse: boolean;
+  containerCount: number;
+  dangling?: boolean;
+}
+
 export interface EnvVar {
   key: string;
   value: string;

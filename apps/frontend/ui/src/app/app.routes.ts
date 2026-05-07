@@ -52,6 +52,14 @@ export const routes: Routes = [
     title: 'Containers · Myroku',
   },
   {
+    path: 'images',
+    loadComponent: () =>
+      import('./features/images/images-list.page').then(
+        (m) => m.ImagesListPage,
+      ),
+    title: 'Imagens · Myroku',
+  },
+  {
     path: 'settings',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'system' },

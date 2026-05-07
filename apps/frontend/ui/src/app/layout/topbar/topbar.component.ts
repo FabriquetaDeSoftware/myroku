@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideAngularModule,
   Box,
+  Layers,
   LayoutDashboard,
   LayoutGrid,
   Moon,
@@ -40,5 +41,6 @@ export class TopbarComponent {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { path: '/apps', label: 'Apps', icon: Package, exact: false },
     { path: '/containers', label: 'Containers', icon: Box, exact: false },
+    { path: '/images', label: 'Imagens', icon: Layers, exact: false },
   ];
 }
