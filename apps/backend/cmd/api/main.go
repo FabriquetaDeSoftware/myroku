@@ -23,6 +23,11 @@ func main() {
 
 	fmt.Printf("Server starting...\n")
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello, World!")
+	})
+
 	fmt.Printf("Server is running on http://localhost:%s\n", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("Server failed to start: %v\n", err)
