@@ -1,20 +1,24 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   Activity,
   Box,
   CircleX,
   Clock,
+  HardDrive,
+  Layers,
   LucideAngularModule,
-  Package,
   PlayCircle,
-  Rocket,
 } from 'lucide-angular';
-import { APPS_FIXTURE } from '../../core/api/fixtures';
-import { Application } from '../../core/api/types';
-import { AppRowComponent } from '../../shared/components/app-row/app-row.component';
+import { toast } from 'ngx-sonner';
+import { ContainersService } from '../../core/api/containers.service';
+import { ImagesService } from '../../core/api/images.service';
+import { SystemService } from '../../core/api/system.service';
+import { Container, DockerImage, SystemDF } from '../../core/api/types';
+import { ContainerRowComponent } from '../../shared/components/container-row/container-row.component';
 import { DashboardChartsComponent } from '../../shared/components/dashboard-charts/dashboard-charts.component';
 import { DetailDrawerComponent } from '../../shared/components/detail-drawer/detail-drawer.component';
+import { BytesPipe } from '../../shared/pipes/bytes.pipe';
 import { RelativeDatePipe } from '../../shared/pipes/relative-date.pipe';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
@@ -25,7 +29,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
     RouterLink,
     LucideAngularModule,
     StatCardComponent,
-    AppRowComponent,
+    ContainerRowComponent,
     DashboardChartsComponent,
     DetailDrawerComponent,
     RelativeDatePipe,
@@ -33,7 +37,6 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
   ],
   template: `
     <section class="space-y-6">
-      <!-- Hero -->
       <header
         class="rounded-2xl bg-linear-to-br from-emerald-600 to-emerald-700 p-8 text-white"
       >
@@ -44,13 +47,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
         <p class="mt-1 text-sm opacity-90">{{ today }}</p>
       </header>
 
-      <!-- StatCards -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <app-stat-card
-          label="Total apps"
-          [value]="stats().total"
-          [icon]="Package"
-        />
         <app-stat-card
           label="Running"
           [value]="stats().running"
@@ -68,37 +65,48 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
           [icon]="Clock"
         />
         <app-stat-card
-          label="Deploys hoje"
-          [value]="stats().deploysToday"
-          [icon]="Rocket"
-        />
-        <app-stat-card
-          label="Falhos"
+          label="Failed"
           [value]="stats().failed"
           [icon]="CircleX"
           tone="negative"
         />
+        <app-stat-card
+          label="Imagens"
+          [value]="stats().imagesTotal"
+          [icon]="Layers"
+        />
+        <app-stat-card
+          label="Disco usado"
+          [value]="diskUsedLabel()"
+          [icon]="HardDrive"
+        />
       </div>
 
-      <!-- Charts -->
-      <app-dashboard-charts [apps]="apps()" />
+      <app-dashboard-charts [containers]="containers()" />
 
-      <!-- Apps recentes -->
       <section>
         <header class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Aplicações recentes</h2>
+          <h2 class="text-lg font-semibold">Containers recentes</h2>
           <a
-            routerLink="/apps"
+            routerLink="/containers"
             class="inline-flex items-center gap-1 text-sm font-medium hover:underline"
             style="color: var(--color-primary-600)"
           >
-            Ver todas
+            Ver todos
             <lucide-icon [img]="Activity" class="size-4" />
           </a>
         </header>
         <div class="space-y-2">
-          @for (app of apps(); track app.id) {
-          <app-app-row [app]="app" (open)="selected.set($event)" />
+          @for (c of recent(); track c.id) {
+          <app-container-row [container]="c" (open)="selected.set($event)" />
+          } @empty {
+          <p class="text-sm" style="color: var(--color-fg-muted)">
+            @if (loading()) {
+              Carregando...
+            } @else {
+              Nenhum container encontrado.
+            }
+          </p>
           }
         </div>
       </section>
@@ -108,36 +116,27 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
     <app-detail-drawer
       [open]="!!sel"
       [title]="sel?.name ?? ''"
-      [subtitle]="sel?.repoFullName ?? null"
-      [pageHref]="sel ? ['/apps', sel.id] : null"
-      pageLabel="Abrir aplicação"
+      [subtitle]="sel?.image ?? null"
       (closed)="selected.set(null)"
     >
       @if (sel) {
       <div class="space-y-5">
         <div class="flex items-center gap-2">
           <app-status-badge [status]="sel.status" />
-          <span
-            class="rounded px-1.5 py-0.5 text-xs font-mono"
-            style="background: var(--color-surface-muted); color: var(--color-fg-muted)"
-          >
-            {{ sel.buildType }}
-          </span>
         </div>
-
         <dl class="space-y-3 text-sm">
           <div class="grid grid-cols-3 gap-2">
-            <dt style="color: var(--color-fg-muted)">Repositório</dt>
-            <dd class="col-span-2 font-mono">{{ sel.repoFullName }}</dd>
+            <dt style="color: var(--color-fg-muted)">ID</dt>
+            <dd class="col-span-2 font-mono break-all">{{ sel.id }}</dd>
           </div>
           <div class="grid grid-cols-3 gap-2">
-            <dt style="color: var(--color-fg-muted)">Branch</dt>
-            <dd class="col-span-2 font-mono">{{ sel.branch }}</dd>
+            <dt style="color: var(--color-fg-muted)">Imagem</dt>
+            <dd class="col-span-2 font-mono break-all">{{ sel.image }}</dd>
           </div>
-          @if (sel.lastDeploymentAt) {
+          @if (sel.startedAt) {
           <div class="grid grid-cols-3 gap-2">
-            <dt style="color: var(--color-fg-muted)">Último deploy</dt>
-            <dd class="col-span-2">{{ sel.lastDeploymentAt | relativeDate }}</dd>
+            <dt style="color: var(--color-fg-muted)">Iniciado</dt>
+            <dd class="col-span-2">{{ sel.startedAt | relativeDate }}</dd>
           </div>
           }
         </dl>
@@ -146,7 +145,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge/statu
     </app-detail-drawer>
   `,
 })
-export class DashboardPage {
+export class DashboardPage implements OnInit {
   readonly today = new Intl.DateTimeFormat('pt-BR', {
     weekday: 'long',
     day: '2-digit',
@@ -154,30 +153,94 @@ export class DashboardPage {
     year: 'numeric',
   }).format(new Date());
 
-  readonly Package = Package;
   readonly PlayCircle = PlayCircle;
   readonly Box = Box;
   readonly Clock = Clock;
-  readonly Rocket = Rocket;
   readonly CircleX = CircleX;
+  readonly Layers = Layers;
+  readonly HardDrive = HardDrive;
   readonly Activity = Activity;
 
-  readonly apps = signal(APPS_FIXTURE.slice(0, 4));
-  readonly selected = signal<Application | null>(null);
+  private readonly containersSvc = inject(ContainersService);
+  private readonly imagesSvc = inject(ImagesService);
+  private readonly systemSvc = inject(SystemService);
+
+  readonly containers = signal<Container[]>([]);
+  readonly images = signal<DockerImage[]>([]);
+  readonly df = signal<SystemDF | null>(null);
+  readonly loading = signal(false);
+  readonly selected = signal<Container | null>(null);
 
   readonly stats = computed(() => {
-    const all = this.apps();
-    const running = all.filter((a) => a.status === 'running').length;
-    const stopped = all.filter((a) => a.status === 'stopped').length;
-    const pending = all.filter((a) => a.status === 'pending').length;
-    const failed = all.filter((a) => a.status === 'failed').length;
+    const all = this.containers();
     return {
-      total: all.length,
-      running,
-      stopped,
-      pending,
-      failed,
-      deploysToday: 7, // placeholder
+      running: all.filter((c) => c.status === 'running').length,
+      stopped: all.filter((c) => c.status === 'stopped').length,
+      pending: all.filter((c) => c.status === 'pending').length,
+      failed: all.filter((c) => c.status === 'failed').length,
+      imagesTotal: this.images().length,
     };
   });
+
+  readonly diskUsedBytes = computed(() => {
+    const d = this.df();
+    if (!d) return 0;
+    return (
+      d.imagesSizeBytes +
+      d.containersSizeBytes +
+      d.volumesSizeBytes +
+      d.buildCacheSizeBytes
+    );
+  });
+
+  private readonly bytesPipe = new BytesPipe();
+  readonly diskUsedLabel = computed(() => this.bytesPipe.transform(this.diskUsedBytes()));
+
+  readonly recent = computed(() => {
+    return [...this.containers()]
+      .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''))
+      .slice(0, 5);
+  });
+
+  ngOnInit(): void {
+    this.loadAll();
+  }
+
+  private loadAll(): void {
+    this.loading.set(true);
+    let pending = 3;
+    const done = () => {
+      pending -= 1;
+      if (pending === 0) this.loading.set(false);
+    };
+
+    this.containersSvc.list().subscribe({
+      next: (list) => {
+        this.containers.set(list);
+        done();
+      },
+      error: (err) => {
+        toast.error('Falha ao carregar containers', {
+          description: err?.message ?? 'Verifique se o backend está rodando.',
+        });
+        done();
+      },
+    });
+
+    this.imagesSvc.list().subscribe({
+      next: (list) => {
+        this.images.set(list);
+        done();
+      },
+      error: () => done(),
+    });
+
+    this.systemSvc.df().subscribe({
+      next: (df) => {
+        this.df.set(df);
+        done();
+      },
+      error: () => done(),
+    });
+  }
 }

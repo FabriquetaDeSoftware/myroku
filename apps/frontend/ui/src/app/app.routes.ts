@@ -9,41 +9,6 @@ export const routes: Routes = [
     title: 'Dashboard · Myroku',
   },
   {
-    path: 'apps',
-    children: [
-      {
-        path: '',
-        pathMatch: 'full',
-        loadComponent: () =>
-          import('./features/apps/apps-list.page').then((m) => m.AppsListPage),
-        title: 'Aplicações · Myroku',
-      },
-      {
-        path: 'new',
-        loadComponent: () =>
-          import('./features/apps/new/new-app-wizard.page').then(
-            (m) => m.NewAppWizardPage,
-          ),
-        title: 'Nova aplicação · Myroku',
-      },
-      {
-        path: ':id',
-        loadComponent: () =>
-          import('./features/apps/detail/app-detail.page').then(
-            (m) => m.AppDetailPage,
-          ),
-      },
-      {
-        path: ':id/deployments/:depId',
-        loadComponent: () =>
-          import(
-            './features/deployments/detail/deploy-detail.page'
-          ).then((m) => m.DeployDetailPage),
-        title: 'Deploy · Myroku',
-      },
-    ],
-  },
-  {
     path: 'containers',
     loadComponent: () =>
       import('./features/containers/containers-list.page').then(

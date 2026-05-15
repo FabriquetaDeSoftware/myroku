@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Moon,
-  Package,
   Search,
   Sun,
 } from 'lucide-angular';
@@ -39,7 +38,6 @@ export class TopbarComponent {
 
   readonly navLinks: NavLink[] = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { path: '/apps', label: 'Apps', icon: Package, exact: false },
     { path: '/containers', label: 'Containers', icon: Box, exact: false },
     { path: '/images', label: 'Imagens', icon: Layers, exact: false },
   ];

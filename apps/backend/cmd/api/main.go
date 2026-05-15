@@ -1,26 +1,30 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/FabriquetaDeSoftware/myroku/internal/docker"
-	httpRouter "github.com/FabriquetaDeSoftware/myroku/internal/http"
+	"github.com/FabriquetaDeSoftware/myroku/internal/config/dotenv"
+	"github.com/jackc/pgx/v5"
 )
 
 func main() {
-	dockerService := docker.NewService()
-	dockerHandler := docker.NewHandler(dockerService)
-	router := httpRouter.NewRouter(dockerHandler)
+	dotenv.Load(".env")
+	port := dotenv.Env.Port
+	databaseUrl := dotenv.Env.DatabaseURL
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8888"
+	conn, err := pgx.Connect(context.Background(), databaseUrl)
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer conn.Close(context.Background())
 
-	addr := ":" + port
-	fmt.Printf("Server is running on http://localhost%s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, router))
+	fmt.Printf("Server starting...\n")
+	mux := http.NewServeMux()
+	fmt.Printf("Server is running on http://localhost:%s\n", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
+		log.Fatalf("Server failed to start: %v\n", err)
+	}
 }

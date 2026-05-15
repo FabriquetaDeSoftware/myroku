@@ -43,7 +43,6 @@ export class LayoutShellComponent implements OnInit {
 
     this.bus.register([
       { id: 'nav.dashboard', label: 'Ir para Dashboard', group: 'Navegar', run: go('/') },
-      { id: 'nav.apps', label: 'Ir para Aplicações', group: 'Navegar', run: go('/apps') },
       { id: 'nav.containers', label: 'Ir para Containers', group: 'Navegar', run: go('/containers') },
       { id: 'nav.images', label: 'Ir para Imagens', group: 'Navegar', run: go('/images') },
       { id: 'nav.settings', label: 'Configurações do sistema', group: 'Navegar', run: go('/settings/system') },

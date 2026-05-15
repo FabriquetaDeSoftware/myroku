@@ -1,7 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
-import { Box, LucideAngularModule, Search } from 'lucide-angular';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Box, LucideAngularModule, RefreshCw, Search } from 'lucide-angular';
 import { toast } from 'ngx-sonner';
-import { CONTAINERS_FIXTURE } from '../../core/api/fixtures';
+import { ContainersService } from '../../core/api/containers.service';
 import { Container, ContainerStatus } from '../../core/api/types';
 import {
   ContainerAction,
@@ -26,12 +26,24 @@ type StatusFilter = 'all' | ContainerStatus;
   ],
   template: `
     <section class="space-y-6">
-      <header>
-        <h1 class="text-2xl font-semibold">Containers</h1>
-        <p class="mt-1 text-sm" style="color: var(--color-fg-muted)">
-          Todos os containers gerenciados pelo Myroku — total
-          {{ containers().length }}.
-        </p>
+      <header class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-semibold">Containers</h1>
+          <p class="mt-1 text-sm" style="color: var(--color-fg-muted)">
+            Todos os containers do Docker daemon — total
+            {{ containers().length }}.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="refresh()"
+          [disabled]="loading()"
+          class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium hover:opacity-80 focus-ring disabled:opacity-50"
+          style="border-color: var(--color-border); background: var(--color-surface)"
+        >
+          <lucide-icon [img]="RefreshCw" class="size-4" [class.animate-spin]="loading()" />
+          Atualizar
+        </button>
       </header>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -65,8 +77,12 @@ type StatusFilter = 'all' | ContainerStatus;
       @if (filtered().length === 0) {
       <app-empty-state
         [icon]="Box"
-        title="Nenhum container encontrado"
-        description="Ajuste o filtro ou inicie uma aplicação."
+        [title]="loading() ? 'Carregando containers...' : 'Nenhum container encontrado'"
+        [description]="
+          loading()
+            ? 'Buscando informações no Docker daemon.'
+            : 'Ajuste o filtro ou suba um container.'
+        "
       />
       } @else {
       <div class="space-y-2">
@@ -103,10 +119,10 @@ type StatusFilter = 'all' | ContainerStatus;
             <dt style="color: var(--color-fg-muted)">Imagem</dt>
             <dd class="col-span-2 font-mono break-all">{{ sel.image }}</dd>
           </div>
-          @if (sel.appId) {
+          @if (sel.ports) {
           <div class="grid grid-cols-3 gap-2">
-            <dt style="color: var(--color-fg-muted)">Aplicação</dt>
-            <dd class="col-span-2 font-mono">{{ sel.appId }}</dd>
+            <dt style="color: var(--color-fg-muted)">Portas</dt>
+            <dd class="col-span-2 font-mono break-all">{{ sel.ports }}</dd>
           </div>
           }
           @if (sel.startedAt) {
@@ -175,15 +191,19 @@ type StatusFilter = 'all' | ContainerStatus;
     </app-detail-drawer>
   `,
 })
-export class ContainersListPage {
+export class ContainersListPage implements OnInit {
   readonly Search = Search;
   readonly Box = Box;
+  readonly RefreshCw = RefreshCw;
+
+  private readonly service = inject(ContainersService);
 
   readonly query = signal('');
   readonly statusFilter = signal<StatusFilter>('all');
   readonly selected = signal<Container | null>(null);
 
-  readonly containers = signal<Container[]>(CONTAINERS_FIXTURE);
+  readonly containers = signal<Container[]>([]);
+  readonly loading = signal(false);
 
   readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -196,6 +216,26 @@ export class ContainersListPage {
       );
     });
   });
+
+  ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh(): void {
+    this.loading.set(true);
+    this.service.list().subscribe({
+      next: (list) => {
+        this.containers.set(list);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        toast.error('Falha ao carregar containers', {
+          description: err?.message ?? 'Verifique se o backend está rodando.',
+        });
+      },
+    });
+  }
 
   onAction(container: Container, action: ContainerAction): void {
     const labels: Record<ContainerAction, string> = {

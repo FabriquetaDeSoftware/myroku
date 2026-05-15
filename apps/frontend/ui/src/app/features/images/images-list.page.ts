@@ -1,7 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
-import { Layers, LucideAngularModule, Search } from 'lucide-angular';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Layers, LucideAngularModule, RefreshCw, Search } from 'lucide-angular';
 import { toast } from 'ngx-sonner';
-import { IMAGES_FIXTURE } from '../../core/api/fixtures';
+import { ImagesService } from '../../core/api/images.service';
 import { DockerImage } from '../../core/api/types';
 import { DetailDrawerComponent } from '../../shared/components/detail-drawer/detail-drawer.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -35,6 +35,16 @@ type UsageFilter = 'all' | 'in-use' | 'unused' | 'dangling';
           </p>
         </div>
         <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="refresh()"
+            [disabled]="loading()"
+            class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium hover:opacity-80 focus-ring disabled:opacity-50"
+            style="border-color: var(--color-border); background: var(--color-surface)"
+          >
+            <lucide-icon [img]="RefreshCw" class="size-4" [class.animate-spin]="loading()" />
+            Atualizar
+          </button>
           <button
             type="button"
             (click)="onPrune()"
@@ -84,8 +94,12 @@ type UsageFilter = 'all' | 'in-use' | 'unused' | 'dangling';
       @if (filtered().length === 0) {
       <app-empty-state
         [icon]="Layers"
-        title="Nenhuma imagem encontrada"
-        description="Ajuste o filtro ou faça pull de uma imagem."
+        [title]="loading() ? 'Carregando imagens...' : 'Nenhuma imagem encontrada'"
+        [description]="
+          loading()
+            ? 'Buscando informações no Docker daemon.'
+            : 'Ajuste o filtro ou faça pull de uma imagem.'
+        "
       />
       } @else {
       <div class="space-y-2">
@@ -191,19 +205,43 @@ type UsageFilter = 'all' | 'in-use' | 'unused' | 'dangling';
     </app-detail-drawer>
   `,
 })
-export class ImagesListPage {
+export class ImagesListPage implements OnInit {
   readonly Search = Search;
   readonly Layers = Layers;
+  readonly RefreshCw = RefreshCw;
+
+  private readonly service = inject(ImagesService);
 
   readonly query = signal('');
   readonly usageFilter = signal<UsageFilter>('all');
   readonly selected = signal<DockerImage | null>(null);
 
-  readonly images = signal<DockerImage[]>(IMAGES_FIXTURE);
+  readonly images = signal<DockerImage[]>([]);
+  readonly loading = signal(false);
 
   readonly totalSize = computed(() =>
     this.images().reduce((acc, i) => acc + i.sizeBytes, 0),
   );
+
+  ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh(): void {
+    this.loading.set(true);
+    this.service.list().subscribe({
+      next: (list) => {
+        this.images.set(list);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        toast.error('Falha ao carregar imagens', {
+          description: err?.message ?? 'Verifique se o backend está rodando.',
+        });
+      },
+    });
+  }
 
   readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
