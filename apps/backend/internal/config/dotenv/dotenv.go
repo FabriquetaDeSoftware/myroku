@@ -1,7 +1,6 @@
 package dotenv
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"strings"
@@ -15,15 +14,13 @@ type config struct {
 var Env config
 
 func Load(path string) error {
-	f, err := os.Open(path)
-	if err != nil {
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	defer f.Close()
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -38,10 +35,6 @@ func Load(path string) error {
 		if _, exists := os.LookupEnv(key); !exists {
 			os.Setenv(key, val)
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
 	}
 
 	parse()

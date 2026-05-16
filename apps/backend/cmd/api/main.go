@@ -1,25 +1,23 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/FabriquetaDeSoftware/myroku/internal/config/dotenv"
-	"github.com/jackc/pgx/v5"
 )
 
 func main() {
 	dotenv.Load(".env")
 	port := dotenv.Env.Port
-	databaseUrl := dotenv.Env.DatabaseURL
+	// databaseUrl := dotenv.Env.DatabaseURL
 
-	conn, err := pgx.Connect(context.Background(), databaseUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close(context.Background())
+	// conn, err := pgx.Connect(context.Background(), databaseUrl)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer conn.Close(context.Background())
 
 	fmt.Printf("Server starting...\n")
 	mux := http.NewServeMux()
