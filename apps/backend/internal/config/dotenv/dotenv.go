@@ -47,13 +47,13 @@ func parse() {
 		log.Fatal("PORT undefined in environment variables")
 	}
 
-	// databaseUrl := os.Getenv("DATABASE_URL")
-	// if databaseUrl == "" {
-	// 	log.Fatal("DATABASE_URL undefined in environment variables")
-	// }
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatal("DATABASE_URL undefined in environment variables")
+	}
 
 	Env = config{
-		Port: port,
-		// DatabaseURL: databaseUrl,
+		Port:        port,
+		DatabaseURL: databaseUrl,
 	}
 }

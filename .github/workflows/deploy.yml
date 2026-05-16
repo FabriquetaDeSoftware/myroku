@@ -48,6 +48,7 @@ jobs:
       BACKEND_ENV_FILE: ${{ vars.BACKEND_ENV_FILE }}
       BACKEND_IMAGE: ${{ vars.BACKEND_IMAGE }}
       BACKEND_CONTAINER: ${{ vars.BACKEND_CONTAINER }}
+      DATABASE_URL: ${{ vars.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,6 +59,18 @@ jobs:
           : "${BACKEND_ENV_FILE:?defina vars.BACKEND_ENV_FILE em Settings → Variables → Actions}"
           : "${BACKEND_IMAGE:?defina vars.BACKEND_IMAGE em Settings → Variables → Actions}"
           : "${BACKEND_CONTAINER:?defina vars.BACKEND_CONTAINER em Settings → Variables → Actions}"
+          : "${DATABASE_URL:?defina vars.DATABASE_URL em Settings → Variables → Actions}"
+
+      - name: Aplicar migrations
+        shell: bash
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/apps/backend/sql/migrations:/migrations" \
+            --network host \
+            migrate/migrate:v4.17.1 \
+            -path=/migrations \
+            -database "${DATABASE_URL}" \
+            up
 
       - name: Build imagem do backend
         run: docker build -t ${BACKEND_IMAGE} ./apps/backend
@@ -70,6 +83,7 @@ jobs:
             --restart unless-stopped \
             -p ${BACKEND_PORT}:${BACKEND_PORT} \
             -e PORT=${BACKEND_PORT} \
+            -e DATABASE_URL="${DATABASE_URL}" \
             --env-file ${BACKEND_ENV_FILE} \
             -v /var/run/docker.sock:/var/run/docker.sock \
             ${BACKEND_IMAGE}
