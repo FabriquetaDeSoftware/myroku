@@ -1,0 +1,37 @@
+# Run from the apps/backend directory:
+#   docker compose -f deployments/docker-compose.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: myroku-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-myroku}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../sql/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: build/package/Dockerfile
+    container_name: myroku-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: ${PORT:-8888}
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-myroku}?sslmode=disable
+    ports:
+      - "${PORT:-8888}:8888"
+
+volumes:
+  postgres_data:

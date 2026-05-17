@@ -73,7 +73,7 @@ jobs:
             up
 
       - name: Build imagem do backend
-        run: docker build -t ${BACKEND_IMAGE} ./apps/backend
+        run: docker build -f apps/backend/build/package/Dockerfile -t ${BACKEND_IMAGE} ./apps/backend
 
       - name: Recriar container do backend
         run: |
@@ -88,17 +88,17 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             ${BACKEND_IMAGE}
 
-      - name: TCP healthcheck
+      - name: HTTP healthcheck
         shell: bash
         run: |
           for i in {1..15}; do
-            if (echo > /dev/tcp/localhost/${BACKEND_PORT}) 2>/dev/null; then
-              echo "backend OK na porta ${BACKEND_PORT}"
+            if curl -fsS "http://localhost:${BACKEND_PORT}/health" -o /dev/null; then
+              echo "backend OK em http://localhost:${BACKEND_PORT}/health"
               exit 0
             fi
             sleep 2
           done
-          echo "backend não subiu em 30s na porta ${BACKEND_PORT}"
+          echo "backend não respondeu /health em 30s na porta ${BACKEND_PORT}"
           docker logs ${BACKEND_CONTAINER}
           exit 1
 
